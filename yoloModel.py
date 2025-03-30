@@ -47,8 +47,8 @@ while True:
     # Split and resize images
     left_img = frame[:, :640]
     right_img = frame[:, 640:] 
-    left_img = cv.resize(left_img, (640, 480))
-    right_img = cv.resize(right_img, (640, 480))
+    # left_img = cv.resize(left_img, (640, 480))
+    # right_img = cv.resize(right_img, (640, 480))
 
     # Rectify images
     left_rect = cv.remap(left_img, stereoMapL_x, stereoMapL_y, cv.INTER_LANCZOS4)

@@ -11,7 +11,7 @@ objp = np.zeros((chessboradSize[0]*chessboradSize[1],3), np.float32)
 objp[:,:2] = np.mgrid[0:chessboradSize[0], 0:chessboradSize[1]].T.reshape(-1,2)
 
 objp *= 19
-print(object)
+print(objp)
 
 objPoints = [] # 3D
 imgPointsL = [] # 2D
