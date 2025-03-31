@@ -39,6 +39,12 @@ cap = cv.VideoCapture(0)
 cap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
 
+# Parameters for averaging
+frame_count = 0
+x = 10  # Number of frames to average over
+depth_sums = {}
+depth_counts = {}
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -88,8 +94,10 @@ while True:
     indexes = cv.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     if len(indexes) > 0:
         indexes = indexes.flatten()
-    
-    # Draw detections with depth
+
+    # Reset depth tracking for this frame
+    danger_detected = False  # Flag to track if any object is in the danger zone
+
     for i in indexes:
         x, y, w, h = boxes[i]
         try:
@@ -100,18 +108,40 @@ while True:
                 avg_disparity = np.mean(roi[mask])
                 if avg_disparity > 0:
                     depth = (baseline * focal_length) / avg_disparity
-                    label = f"{classes[class_ids[i]]} {depth:.2f}m"
                 else:
-                    label = f"{classes[class_ids[i]]} ?m"
+                    depth = None
             else:
-                label = f"{classes[class_ids[i]]} ?m"
-            
+                depth = None
+
+            # Update depth tracking
+            if depth is not None:
+                class_name = classes[class_ids[i]]
+                if class_name not in depth_sums:
+                    depth_sums[class_name] = 0
+                    depth_counts[class_name] = 0
+                depth_sums[class_name] += depth
+                depth_counts[class_name] += 1
+
+                # Check if the object is in the danger zone
+                if depth < 1.0:  # Danger threshold (example: 1 meter)
+                    danger_detected = True
+
             # Draw bounding box and label
+            label = f"{class_name} {depth:.2f}m"
             color = (0, 255, 0)
             cv.rectangle(left_rect, (x, y), (x+w, y+h), color, 2)
             cv.putText(left_rect, label, (x, y-5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
         except:
             pass
+
+    # Increment frame count
+    frame_count += 1
+
+    # Display "Danger" or "Safe" based on the flag
+    if danger_detected:
+        cv.putText(left_rect, "Danger", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)  # Red
+    else:
+        cv.putText(left_rect, "Safe", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)  # Green
 
     cv.imshow("Object Detection", left_rect)
     cv.imshow("Disparity", (disparity - stereo.getMinDisparity()) / stereo.getNumDisparities())
