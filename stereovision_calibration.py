@@ -10,6 +10,8 @@ criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((chessboradSize[0]*chessboradSize[1],3), np.float32)
 objp[:,:2] = np.mgrid[0:chessboradSize[0], 0:chessboradSize[1]].T.reshape(-1,2)
 
+# 19 mm square size. Change this value according to your chessboard square size.
+# I measured the square size with a ruler and it was 19 mm.
 objp *= 19
 print(objp)
 
