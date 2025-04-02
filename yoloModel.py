@@ -18,11 +18,11 @@ with open("coco.names", "r") as f:
 layer_names = net.getLayerNames()
 output_layers = [layer_names[int(i) - 1] for i in net.getUnconnectedOutLayers()]
 
-# Camera parameters (adjust based on your calibration)
+# Camera parameters
 baseline = 0.06  # 6 cm in meters
-focal_length = 800  # Focal length in pixels (example value)
+focal_length = 800  # Focal length in pixels
 
-# Initialize stereo matcher
+# Stereo matcher (we can play with these parameters)
 stereo = cv.StereoSGBM_create(
     minDisparity=0,
     numDisparities=64,
@@ -39,7 +39,7 @@ cap = cv.VideoCapture(0)
 cap.set(cv.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
 
-# Parameters for averaging
+# Parameters for averaging (Used to overcome noise in depth estimation)
 frame_count = 0
 x = 10  # Number of frames to average over
 depth_sums = {}
@@ -53,6 +53,7 @@ while True:
     # Split and resize images
     left_img = frame[:, :640]
     right_img = frame[:, 640:] 
+    # Leave this part commented for now. I'll check the resizing later.
     # left_img = cv.resize(left_img, (640, 480))
     # right_img = cv.resize(right_img, (640, 480))
 
@@ -96,7 +97,7 @@ while True:
         indexes = indexes.flatten()
 
     # Reset depth tracking for this frame
-    danger_detected = False  # Flag to track if any object is in the danger zone
+    danger_detected = False 
 
     for i in indexes:
         x, y, w, h = boxes[i]
@@ -123,7 +124,7 @@ while True:
                 depth_counts[class_name] += 1
 
                 # Check if the object is in the danger zone
-                if depth < 1.0:  # Danger threshold (example: 1 meter)
+                if depth < 1.0:  # Danger threshold (We set it as 1 meter)
                     danger_detected = True
 
             # Draw bounding box and label
@@ -139,9 +140,9 @@ while True:
 
     # Display "Danger" or "Safe" based on the flag
     if danger_detected:
-        cv.putText(left_rect, "Danger", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)  # Red
+        cv.putText(left_rect, "Danger", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     else:
-        cv.putText(left_rect, "Safe", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)  # Green
+        cv.putText(left_rect, "Safe", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
     cv.imshow("Object Detection", left_rect)
     cv.imshow("Disparity", (disparity - stereo.getMinDisparity()) / stereo.getNumDisparities())
